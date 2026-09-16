@@ -1,0 +1,43 @@
+# ================= Python 相关忽略 =================
+# Python虚拟环境
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+# Jupyter notebook缓存（如果以后用jupyter）
+.ipynb_checkpoints/
+
+# ================= DBeaver 相关忽略 =================
+# DBeaver本地配置、连接信息（包含数据库账号密码！！必须忽略）
+.dbeaver/
+.dbeaver-data/
+*.dbeaver-config
+# DBeaver自动生成的临时脚本
+*.tmp.sql
+
+# ================= PostgreSQL 相关忽略 =================
+# PG导出的本地备份文件、dump，体积大，不提交
+*.dump
+*.sql.backup
+*.bak
+# 数据库连接信息、密码文件
+.env
+*.secret
+
+# ================= 通用系统文件 =================
+# Windows系统文件
+Thumbs.db
+Desktop.ini
+# Mac
+.DS_Store
+
+# ================= 可选：大型数据文件（重点！） =================
+# 数据分析的csv/excel原始数据，不要提交到github（文件大，隐私）
+*.csv
+*.xlsx
+*.xls
+*.parquet
