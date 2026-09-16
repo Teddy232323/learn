@@ -10,4 +10,5 @@ values
 ('橘子',100),
 ('香蕉',80);
 
-select * from products;
+select * from products;--模块1：演示完整提交流程
+select max(price),min(price) from products;
