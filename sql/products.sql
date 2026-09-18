@@ -21,10 +21,19 @@ select product_name,regist_date
 select * from product where purchase_price is null;
 select * from product where purchase_price is not null;
 --2.3
+--answer1:
 select product_name,sale_price,purchase_price
 	from product 
 	where sale_price >= purchase_price+500;
-
+--answer2:
+select product_name,sale_price,purchase_price
+	from product p 
+	where purchase_price+500 <=sale_price; 
+--2.4
+select product_name,product_type,0.9*sale_price-purchase_price as profit
+	from product p 
+	where 0.9*sale_price-purchase_price>100
+		and product_type in ('办公用品','厨房用具');
 --3.1
 select product_type,sum(sale_price )
 	from product p
