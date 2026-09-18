@@ -13,6 +13,23 @@ values
 select * from products;
 
 --26-09-17，练习题>SQL基础教程2版
+--1.1
+create table addressbook3( 
+	regist_no int not null,
+	name varchar(128) not null,
+	address varchar(256) not null,
+	tel_no char(10),
+	mail_address char(20)
+	);
+alter table addressbook3 add constraint a_pk primary  key (regist_no);
+--1.2
+alter table addressbook3 add column postal_code char(8) not null;
+select * from addressbook3;
+--1.3
+drop table addressbook3;
+alter table addressbook rename to addressbook3;
+
+
 --2.1
 select product_name,regist_date
 	from product
