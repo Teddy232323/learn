@@ -103,7 +103,18 @@ select * from productmargin1;
 update productmargin1
 set margin=sale_price-purchase_price;
 --5.1
-
+create view viewpractices5_1(product_name,sale_price,regist_date)
+	as
+	select product_name,sale_price,regist_date
+		from product 
+		where sale_price>=1000 and 
+			regist_date='2009-09-20';
+select  * from viewpractice5_1;
+--5-2
+select * from product;
+insert into viewpractice5_1 
+	values
+	('刀子',300,'2009-11-02');
 
 /*
  #2. advanced SQL tutorial
@@ -191,6 +202,11 @@ select  p1.pref_name,p1."男",p2."女"
 			(select pref_name,sum(population) as "女"
 				from poptbl2 p2 where sex=2 group by pref_name) as p2
 			on p1.pref_name=p2.pref_name;
+
+
+
+
+
 
 
 
