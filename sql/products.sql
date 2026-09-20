@@ -12,7 +12,11 @@ values
 
 select * from products;
 
---26-09-17，练习题>SQL基础教程2版
+/*
+ #1. SQL basics tutorial 2nd edition
+*/
+--#1.1 learn book
+--##1.2 exercises 
 --1.1
 create table addressbook3( 
 	regist_no int not null,
@@ -100,6 +104,98 @@ update productmargin1
 set margin=sale_price-purchase_price;
 --5.1
 
+
+/*
+ #2. advanced SQL tutorial
+ */ 
+--2.1 textbook study
+--p17
+select * from poptbl;
+create table poptbl(
+	pref_name char(2) not null ,
+	population int not null,
+	primary key(pref_name)
+	);
+insert  into poptbl(pref_name,population)
+values 
+	('德岛',100),
+	('香川',200),
+	('爱媛',150),
+	('高知',200),
+	('福冈',300),
+	('佐贺',100),
+	('长崎',200),
+	('东京',400),
+	('群马',50);
+select 
+	case when pref_name in ('德岛','香川','爱媛','高知') then '四国'
+		when pref_name in('福冈','佐贺','长崎') then '九州'
+		else '其他' end 
+		as "地区名",
+	sum(population) as "人口"
+	from poptbl 
+	group by "地区名"
+	order by "人口" desc;
+select * from poptbl;
+--answer to the example 
+--1.1 case expression
+select 
+	case pref_name
+		when '德岛' then '四国'
+		when '香川' then '四国'
+		when '爱媛' then '四国'
+		when '高知' then '四国'
+		when '福冈' then '九州'
+		when '佐贺' then '九州'
+		when '长崎' then '九州'
+		else '其他' end 
+		as district,
+	sum(population)
+	from poptbl
+	group by 
+		case pref_name
+		when '德岛' then '四国'
+		when '香川' then '四国'
+		when '爱媛' then '四国'
+		when '高知' then '四国'
+		when '福冈' then '九州'
+		when '佐贺' then '九州'
+		when '长崎' then '九州'
+		else '其他' end;
+---
+--p18
+select  
+	case 
+		when population<100 then '01'
+		when population>=100 and population<200 then '02'
+		when population>=200 and population<300 then '03'
+		else '04' end 
+		as pop_class,
+	count(*) as cnt  
+	from poptbl 
+	group by pop_class
+	order by pop_class;
+---
+--p20
+select * from poptbl2;
+select  pref_name as "县名",
+		sum(case when sex=1 then population else 0 end ) as "男",
+		sum(case when sex=2 then population else 0 end ) as "女"
+	from poptbl2
+	group by "县名";
+--**left outer join**
+select  p1.pref_name,p1."男",p2."女"
+	from (select pref_name,sum(population) as "男"
+				from poptbl2 where sex=1 group by pref_name) as p1
+			 left outer join
+			(select pref_name,sum(population) as "女"
+				from poptbl2 p2 where sex=2 group by pref_name) as p2
+			on p1.pref_name=p2.pref_name;
+
+
+
+
+--2.2 exercises
 
 select * from products;--模块1：演示完整提交流程
 select max(price),min(price) from products;
