@@ -10,12 +10,57 @@ values
 ('橘子',100),
 ('香蕉',80);
 
-select * from products;
+select * from product;
 
 /*
- #1. SQL basics tutorial 2nd edition
+ * 
+ #**1. SQL basics tutorial 2nd edition**
+*
 */
 --#1.1 learn book
+--p186
+select product_id,product_name,sale_price,
+		(select avg(sale_price) from product )
+			as avg_price
+	from product;
+delete  
+	from product 
+	where product_id not in (select min(product_id) 
+												from product 
+												group by product_name);
+/*
+ * 从 product 表按 product_id 去重，
+ * 把去重后的全部数据生成新表 product_1，
+ *然后查询新表看结果
+ */
+create table product_1 as
+	select distinct on (product_id) *
+	from product;
+select * from product_1;
+drop table product cascade ;
+alter table product_1 rename to product;
+select * from product;
+---
+/*
+ * 找出 product_name 名称重复的多余记录（只查询，不会删除数据）
+ */
+with t as (
+	select  product_id,product_name,
+		row_number() over(partition by product_name order by product_id) as rn
+	from product
+)
+select * from t where rn>1;
+---
+--p188
+select product_name,product_type,sale_price
+	from product p1 
+	where sale_price>=(select avg(sale_price) 
+									from product p2
+									where p1.product_type=p2.product_type
+									group by product_type);
+
+
+
 --##1.2 exercises 
 --1.1
 create table addressbook3( 
@@ -103,10 +148,30 @@ select * from productmargin1;
 update productmargin1
 set margin=sale_price-purchase_price;
 --5.1
-
+create view viewpractice5_1("商品名称","售价","日期")
+	as 
+	select product_name,sale_price,regist_date
+		from product p 
+		where sale_price>=1000 and regist_date='2009-09-20';
+select * from viewpractice5_1;
+drop view if exists viewpractice5_5;
+--5.2
+insert into viewpractice5_1 
+	values
+	('刀子',300,'2009-11-02');
+select * from product;
+--5.3
+delete from product 
+	where sale_price=300;
+select product_id,product_name,product_type,sale_price,
+		(select avg(sale_price) from product) as sale_price_all
+	from product;
+--5.4
 
 /*
- #2. advanced SQL tutorial
+ * 
+ # **2. advanced SQL tutorial**
+ *
  */ 
 --2.1 textbook study
 --p17
