@@ -244,6 +244,12 @@ select
 			as high_price
 	from product;
 --7.1
+select  * from viewpractice5_1;
+--5-2
+select * from product;
+insert into viewpractice5_1 
+	values
+	('刀子',300,'2009-11-02');
 
 /*
  * 
@@ -333,6 +339,11 @@ select  p1.pref_name,p1."男",p2."女"
 			(select pref_name,sum(population) as "女"
 				from poptbl2 p2 where sex=2 group by pref_name) as p2
 			on p1.pref_name=p2.pref_name;
+
+
+
+
+
 
 
 
