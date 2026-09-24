@@ -18,7 +18,7 @@ select * from product;
 *
 */
 --#1.1 learn book
---p186
+--p186，标量子查询，
 select product_id,product_name,sale_price,
 		(select avg(sale_price) from product )
 			as avg_price
@@ -35,7 +35,8 @@ delete
  */
 create table product_1 as
 	select distinct on (product_id) *
-	from product;
+	from product
+	order by product_id;
 select * from product_1;
 drop table product cascade ;
 alter table product_1 rename to product;
@@ -51,15 +52,18 @@ with t as (
 )
 select * from t where rn>1;
 ---
---p188
+--p188,关联子查询,子查询添加where子句的条件
 select product_name,product_type,sale_price
 	from product p1 
 	where sale_price>=(select avg(sale_price) 
 									from product p2
 									where p1.product_type=p2.product_type
-									group by product_type);
-
-
+									);
+/*
+ * select avg(sale_price) from product p2
+ * 			where p1.product_type=p2.product_type
+ * 			group by product_type
+ */
 
 --##1.2 exercises 
 --1.1
@@ -148,6 +152,7 @@ select * from productmargin1;
 update productmargin1
 set margin=sale_price-purchase_price;
 --5.1
+--t1
 create view viewpractice5_1("商品名称","售价","日期")
 	as 
 	select product_name,sale_price,regist_date
@@ -155,18 +160,90 @@ create view viewpractice5_1("商品名称","售价","日期")
 		where sale_price>=1000 and regist_date='2009-09-20';
 select * from viewpractice5_1;
 drop view if exists viewpractice5_5;
+--t2
+create view viewpractice5_2(product_name,sale_price,regist_date)
+	as 
+	select product_name,sale_price,regist_date
+		from product 
+		where sale_price>=1000 and 
+			regist_date='2009-09-20';
+select * from viewpractice5_1;
 --5.2
+--t1
 insert into viewpractice5_1 
 	values
 	('刀子',300,'2009-11-02');
 select * from product;
+--t2
+insert into viewpractice5_2
+	values
+	('刀子',300,'2009-11-02');
+select * from viewpractice5_2;
+select * from product;
+delete 
+	from product 
+	where product_id is null;
 --5.3
+--t1
 delete from product 
 	where sale_price=300;
 select product_id,product_name,product_type,sale_price,
 		(select avg(sale_price) from product) as sale_price_all
 	from product;
+--t2
+select product_id,product_name,product_type,sale_price,
+		(select avg(sale_price) from product) as sale_price_all
+	from product;
+--t3
+select product_id,product_name,product_type,sale_price,
+		avg(sale_price) over () 
+	from product;
 --5.4
+--t1**关联子查询**
+select p1.product_id,p1.product_name,p1.product_type,p1.sale_price,
+		(select avg(sale_price) 
+			from product p2 
+			where p1.product_type=p2.product_type)  
+			as avg_sale_price
+	from product p1;
+--t2**avg()窗口函数**
+select product_id,product_name,product_type,sale_price,
+		avg(sale_price) over ( partition by product_type)
+	from product
+	order by sale_price;
+--6.1
+select * from product;
+--1
+select product_name,purchase_price
+	from product
+	where purchase_price not in(500,2800,5000);
+--2**null表达式使用**
+select product_name,purchase_price
+	from product
+	where purchase_price not in(500,2800,5000,null);
+--**is nul or is not null**
+select product_name,purchase_price
+	from product 
+	where purchase_price is not null;
+--6.2
+--t1**sum()聚合函数+case()语句**+case语句与聚合函数优先级
+select sum(case when sale_price <=1000 then 1 else 0 end) 
+			as low_price,
+		sum(case when sale_price<=3000 and sale_price>1000 then 1 else 0 end) 
+			as mid_price,
+		sum(case when sale_price>3000 then 1 else 0 end)
+			as high_price
+	from product;
+--t2**count()聚合函数+case()语句**
+select 
+		count(case when sale_price<=1000 then 1 else null end )
+			as low_price,
+		count(case when sale_price>1000 and sale_price<=3000 then 1 else null end) 
+			as mid_price,
+		count(case when sale_price>3000 then 1 else null end) 
+			as high_price
+	from product;
+--7.1
 
 /*
  * 
