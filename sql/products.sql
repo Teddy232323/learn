@@ -59,6 +59,55 @@ select product_name,product_type,sale_price
 									from product p2
 									where p1.product_type=p2.product_type
 									);
+--p247
+select product_id,product_name
+	from product 
+union
+select product_id,cast(regist_date as varchar)
+	from product2;
+select * from product2;
+--	union all**重复部分**
+select product_id,product_name
+	from product 
+union all 
+select product_id,product_name
+	from product2;
+--intersect intersect all
+select product_id,product_name
+	from product 
+intersect 
+select product_id,product_name
+	from product2 
+order by product_id;
+--except **位置**
+select product_id,product_name
+	from product  
+except 
+select product_id,product_name
+	from product2 
+order by product_id;
+--from  inner join on **join**
+select sp.shop_id,sp.shop_name,sp.product_id,
+		p.product_name,p.sale_price
+	from shopproduct  as sp 
+		inner join product as p 
+			on sp.product_id=p.product_id
+	where sp.shop_id='000A'; 
+--from left/right outer join on**外联接**
+ select sp.shop_id,sp.shop_name,sp.product_id,
+ 		p.product_name,p.sale_price
+ 	from  shopproduct as sp 
+ 		right outer join product as p
+ 			on sp.product_id=p.product_id;
+ select * from empskills;
+select distinct emp 
+	from empskills es1
+	where not exists ( 
+		select skill  from skills 
+		except 
+		select skill from empskills es2
+		where es1.emp=es2.emp 
+		);
 /*
  * select avg(sale_price) from product p2
  * 			where p1.product_type=p2.product_type
@@ -237,20 +286,32 @@ select sum(case when sale_price <=1000 then 1 else 0 end)
 --t2**count()聚合函数+case()语句**
 select 
 		count(case when sale_price<=1000 then 1 else null end )
-			as low_price,
+			as low_price
 		count(case when sale_price>1000 and sale_price<=3000 then 1 else null end) 
 			as mid_price,
 		count(case when sale_price>3000 then 1 else null end) 
 			as high_price
 	from product;
 --7.1
-select  * from viewpractice5_1;
---5-2
-select * from product;
-insert into viewpractice5_1 
-	values
-	('刀子',300,'2009-11-02');
-
+select  * 
+	from product 
+union 
+select *
+	from product 
+intersect 
+select *
+	from product 
+order by product_id;
+--7.2
+select 
+		case when sp.shop_id is not null then sp.shop_id else '不确定' end,
+		case when sp.shop_name  is null then '不确定' else sp.shop_name end,
+		sp.product_id,	p.product_name,p.sale_price
+	from shopproduct as sp 
+		right outer join product as p 
+		on sp.product_id=p.product_id;
+	
+	
 /*
  * 
  # **2. advanced SQL tutorial**
