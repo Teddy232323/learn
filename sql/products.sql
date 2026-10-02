@@ -317,7 +317,7 @@ select
  # **2. advanced SQL tutorial**
  *
  */ 
---2.1 textbook study
+--##2.1 textbook study##
 --p17
 select * from poptbl;
 create table poptbl(
@@ -346,6 +346,33 @@ select
 	group by "地区名"
 	order by "人口" desc;
 select * from poptbl;
+select case when pref_name in('德岛','香川','爱媛','高知')
+					then '四国'
+					when pref_name in ('福冈','佐贺','长崎')
+					then '九州'
+					else '其他'  end as "地区名",
+			sum(population) as "人口"
+	from poptbl
+	group by "地区名"
+	order by "人口" desc;
+--p20
+select pref_name as "县名",
+		sum(case sex when 1 then population
+			else 0 end) as "男",
+		sum(case sex when 2 then population
+			else 0 end) as "女"
+	from poptbl2
+	group by pref_name
+	order by "县名";
+select current_database();
+/*
+--constraint check_salary check
+		(case when sex='2' 
+			then 
+					case when salary<=20000
+						then 1 else 0 end
+			else 1 end =1	)
+*/
 --answer to the example 
 --1.1 case expression
 select 
@@ -400,16 +427,403 @@ select  p1.pref_name,p1."男",p2."女"
 			(select pref_name,sum(population) as "女"
 				from poptbl2 p2 where sex=2 group by pref_name) as p2
 			on p1.pref_name=p2.pref_name;
+--p23
+select * from salaries;
+--
+update salaries 
+	set salary=300000
+	where name='相田';
+--
+update salaries s 
+	set salary=case 
+						when name ='神崎' then 270000
+						when name='木村' then 220000
+						when name='相田' then 300000
+						else 290000 
+					end
+	where name in('相田','神崎','木村','齐藤');
+--
+update salaries s 
+	set 
+	name='神崎'
+	where name='神琦';
+update salaries 
+	set 
+	salary=case when salary>=300000 
+							then salary*0.9
+						when salary>=250000 and salary<280000
+							then salary*1.2
+						else salary 
+						end
+	;
+---
+--p25
+select * from sometable;
+update sometable
+	set p_key=case 
+						when p_key='a'
+							then 'b'
+						when p_key='b'
+							then 'a'
+						else p_key 
+						end 
+	where p_key in ('a','b');
+--p27
+select * from coursemaster;
+select * from opencourses;
+--**case语句+in谓语**
+select coursemaster as course_name,
+	case when course_id in 
+					(select course_id 
+							from opencourses 
+							where  month=200706)
+				then 'o' else 'x' 
+				end
+	as "6月",
+	case when course_id in 
+					(select course_id 
+							from opencourses 
+							where  month=200707)
+				then 'o' else 'x' 
+				end
+	as "7月",
+	case when course_id in 
+					(select course_id 
+							from opencourses 
+							where  month=200708)
+				then 'o' else 'x' 
+				end
+	as "8月"
+	from coursemaster;
+--**关联子查询+exists谓语**
+select course_name,
+		case when exists (select course_id 
+											from opencourses op 
+											where op.course_id=co.course_id
+											and month=200706)
+				then 'o' else 'x' end
+		as "6月",
+		case when exists (select course_id 
+											from opencourses op 
+											where op.course_id=co.course_id
+											and month=200707) 
+				then 'o' else 'x' end
+		as "7月",
+		case when exists (select course_id 
+											from opencourses op 
+											where op.course_id=co.course_id
+											and month=200708) 
+				then 'o' else 'x' end
+		as "8月"
+	from coursemaster co;
+--p28
+select * from studentclub;
+create table studentclub( 
+std_id int not null,
+club_id int not null,
+club_name varchar(4) not null,
+main_club_flg varchar(2) not null);
+alter table studentclub add constraint 
+	p_key primary key(std_id,club_id);
+insert into studentclub 
+values
+	(100,1,'棒球','Y'),
+	(100,2,'管弦乐','N'),
+	(200,2,'管弦乐','N'),
+	(200,3,'羽毛球','Y'),
+	(200,4,'足球','N'),
+	(300,4,'足球','N'),
+	(400,5,'游泳','N'),
+	(500,6,'围棋','N');
+--29
+/*select std_id,club_id 
+	from studentclub
+except
+select std_id,club_id
+	from studentclub 
+	where main_club_flg='Y' ;	
+	end
+	studentclub 
+	*/
+select std_id,max(club_id) as main_club
+	from studentclub 
+	group by std_id 
+	having count(*)=1;
+--
+select std_id,club_id as main_club
+	from studentclub 
+	where main_club_flg='Y';
+select std_id,
+		case when count(*)=1 then max(club_id)
+				else max(case when main_club_flg='Y'
+										then club_id
+										else null end)
+				end as main_club
+from studentclub s 
+group by std_id
+order by std_id;
+---
+--p32**exercise 1-1-1**
+select * from greatests;
+select key,case when x>=y and x>=z then x 
+							when y>=x and y>=z then y 
+							else z end as greatest 
+	from greatests;
+select key,max(col ) as greatest
+	from (select key,x as col from greatests 
+			  union all
+			  select key,y as col from greatests 
+			  union all
+			  select key,z as col from greatests 
+			  ) as tmp
+	group by key
+	order by key;
+--p33**e1-1-2**
+select * from poptbl2;
+--**关联子查询，扫描整张表
+select case sex when 1 then '男' 
+						 else '女' end as "性别",
+		sum(population) as "全国",
+		(select sum(population) from poptbl2 p2
+					where pref_name='德岛'
+						and p1.sex=p2.sex) as "德岛",
+		(select sum(population) from poptbl2 p2
+					where pref_name='香川'
+						and p1.sex=p2.sex) as "香川",
+		(select sum(population) from poptbl2 p2
+					where pref_name='爱媛'
+						and p1.sex=p2.sex) as "爱媛",
+		(select sum(population) from poptbl2 p2
+					where pref_name='高知'
+						and p1.sex=p2.sex) as "高知",
+		(select sum(population) from poptbl2 p2
+					where pref_name in ('德岛','香川','爱媛','高知')
+						and p1.sex=p2.sex) as "四国(再揭)"
+	from poptbl2 p1
+	group by sex
+	order by sex asc;
+--**sum(case)条件聚合**
+select 
+		case sex when 1 then '男' 
+						else '女' end as "性别",
+		sum(population) as "全国",
+		sum(case when pref_name='德岛' then population
+						else 0 end ) as "德岛",
+		sum(case when pref_name='香川' then population
+						else 0 end ) as "香川",
+		sum(case when pref_name='爱媛' then population
+						else 0 end) as "爱媛",
+		sum(case when pref_name='高知' then population
+						else 0 end) as "高知",
+		sum(case when pref_name in('德岛','香川','爱媛','高知')
+						then population else 0 end) as "四国（再揭）"
+		from poptbl2
+		group by sex;
+--p33**e1-1-3
+select * from greatests;
+select  key,max(col) as max_col
+	from (select key,x as col from greatests
+			 union all 
+			 select key,y as col from greatests
+			 union all
+			 select key,z as col from greatests
+			 ) as g1
+	group  by key
+	order by key;
+select * from greatests 
+	order by case when key='A' then 2
+							when key='B' then 1
+							when key='C' then 4
+							else 3 end;
+/*
+ * 1-2 自连接的用法**usage of self-join**
+ */	
+--p35
+select * from products;
+select p1.name as name_1,p2.name as name_2
+	from products p1,products p2;
+select distinct p1.name as name_1,p2.name as name_2
+	from products p1,products p2
+	where p1.name>p2.name;
+select p1.name as name_1,p2.name as name_2,p3.name as name_3
+	from products p1,products p2,products p3
+	where p1.name>p2.name 
+		and p2.name>p3.name;
+--p39**oracle rowid**
+/*
+ * oracle 中rowid命令，非postgresql命令，
+** delete from products p1
+	where rowid < (select max(p2.rowid)
+								from product p2
+								where p1.name=p2.name 
+									and p1.price=p2.price);
+**delete from products p1 
+	where exists ( select *
+								from products p2
+								where p1.name =p2.name 
+									and p1.price=p2.price 
+									and p1.rowid < p2.rowid);
+*/
+--p40
+create table addresses(
+	name varchar(4) not null,
+	family_id int not null,
+	address varchar(20) not null);
+insert into addresses
+values
+	('前田义明',100,'东京都港区虎之门3-2-29'),
+	('前田由美',100,'东京都港区虎之门3-2-92'),
+	('加藤茶',200,'东京都 新宿区西新宿2-8-1'),
+	('加藤胜',200,'东京都新宿区西新宿2-8-1'),
+	('福尔摩斯',300,'贝克街221B'),
+	('华生',400,'贝克街221B');
+select * from addresses;
+select a1.name,a1.family_id,a1.address
+	from addresses a1,addresses a2
+	where a1.family_id=a2.family_id
+		and a1.address<>a2.address;
+update addresses
+set address='东京都新宿区西新宿2-8-1'
+where name='加藤茶';
+--p41
+select * from products;
+insert into products 
+values 
+('葡萄',50),
+('西瓜',80),
+('柠檬',30),
+('草莓',100);
+update products 
+set 
+	price=100
+where name='香蕉';
+--**self-join,
+select p1.name,p1.price
+	from products p1,products p2
+	where p1.price=p2.price 
+		and p1.name<>p2.name;
+select p1.name,p1.price
+	from products p1
+	inner join products p2 
+	on p1.price=p2.price 
+		and p1.name<>p2.name;
+----**关联子查询，找出价格相等的商品**
+select name,price 
+	from products p1
+	where exists  (select 1  
+					from products p2 
+					where  p1.price=p2.price
+						and p1.name<>p2.name); 
+--p43**窗口函数实现排序**
+select name,price,rank() over (order by price ) as rank_1,
+		dense_rank() over (order by price) as dense_rank_2
+	from products ;
+--**使用非等值自连接实现排序**
+select p1.name,p1.price,
+		(select count(p2.price) 
+			from products p2
+			where p2.price<p1.price) +1 
+			as rank_1,
+			--rank()
+		(select count(distinct p2.price) 
+			from products p2
+			where p2.price<p1.price)+1 
+			as dense_rank_2
+			--dense_rank()
+	from products p1
+	order by rank_1;
+--**排序，使用自连接**
+select p1.name,
+		max(p1.price ) as price,
+		count(p2.name ) +1 as rank_1
+		--max()的使用，count()不统计null
+	from products p1 left join products p2 
+		on p1.price>p2.price
+		--left join on 指定连接的配对条件
+	group by p1.name
+	order by rank_1;
+select p1.name,
+		p1.price as price,
+		--取消max()的使用
+		count(p2.name )+1 as rank_1
+	from products p1 left outer join products p2 
+		on p1.price>p2.price 
+	group by p1.name,p1.price 
+	order by rank_1;
+/*
+ * select p1.name,p2.name
+ * 	      from products p1 left join products p2
+ * 				on p1.price<p2.price;
+ */
+select p1.name,p1.price,p2.name,p2.price 
+	from products p1 inner join products p2
+		on p1.price<p2.price;
+----
+--p48**练习题**
+select * from products ;
+select p1.name,p2.name 
+	from products p1 inner join products p2
+		on p1.price =100 and p2.price =100;
+--exercise 1-2-2
+create table districtproducts( 
+	district varchar(2) not null,
+	name varchar(4) not null,
+	price int not null,
+	primary key(district,name)
+	);
+select * from districtproducts;
+insert into districtproducts
+values
+('东北','橘子',100),
+('东北','苹果',50),
+('东北','葡萄',50),
+('东北','柠檬',30),
+('关东','柠檬',100),
+('关东','菠萝',100),
+('关东','苹果',100),
+('关东','葡萄',70),
+('关西','柠檬',70),
+('关西','西瓜',30),
+('关西','苹果',20);
+--answer1 窗口函数rank() over (partition by group by)
+select district,name,price,
+		rank() over 
+			(partition by district order by price desc)
+			as rank_1
+	from districtproducts
+	order by district,rank;
+--answer2 **左外+自连接  left join on**
+select p1.district,p1.name,p1.price,
+		count(p2.name)+1 	as rank_1
+	from districtproducts p1 left join
+		districtproducts p2 
+		on p1.district=p2.district
+			and p1.price<p2.price
+	group by p1.district,p1.name,p1.price
+	order by p1.district,rank_1;
+--answer3 **标量子查询**
+select district,name,max(price) as price,
+		(select count(*)+1
+			from districtproducts p2
+			where p1.district=p2.district 
+			and p1.price<p2.price)
+			as rank_1
+		from districtproducts  p1
+		order by district,rank_1;
+--exercise 1-2-3	
+create table districtproduct2
+	as
+	select district,name,price
+		from districtproducts;
+alter table districtproduct2 rename to districtproducts2;
+alter table districtproducts2 add column ranking int;
+select * from districtproducts2;
+----
+--answer1
+		
+		
 
 
-
-
-
-
-
-
-
---2.2 exercises
 
 select * from products;--模块1：演示完整提交流程
 select max(price),min(price) from products;
