@@ -759,7 +759,8 @@ select p1.name,p1.price,p2.name,p2.price
 	from products p1 inner join products p2
 		on p1.price<p2.price;
 ----
---p48**练习题**
+--p48
+--exercise 1-2-1 **textbook**
 select * from products ;
 select p1.name,p2.name 
 	from products p1 inner join products p2
@@ -803,10 +804,10 @@ select p1.district,p1.name,p1.price,
 	order by p1.district,rank_1;
 --answer3 **标量子查询**
 select district,name,max(price) as price,
-		(select count(*)+1
+		(select count(p2.price)
 			from districtproducts p2
 			where p1.district=p2.district 
-			and p1.price<p2.price)
+			and p1.price<p2.price)+1
 			as rank_1
 		from districtproducts  p1
 		order by district,rank_1;
@@ -819,12 +820,145 @@ alter table districtproduct2 rename to districtproducts2;
 alter table districtproducts2 add column ranking int;
 select * from districtproducts2;
 ----
+--answer1**自连接1----select子查询**
+select district,name,price,
+		(select count(p2.name) +1 from districtproducts2 p2 
+			where p2.price < p1.price and 
+				p2.district=p1.district)
+			as ranking_1
+	from districtproducts2 p1
+	order by district,ranking_1;
+--answer2**左连接----left join on **
+select p1.district,p1.name,p1.price,
+		count(p2.name)+1 as ranking_2
+	from districtproducts2 p1 left join 
+		districtproducts2 p2 on 
+		p1.district=p2.district and 
+		p1.price>p2.price 
+	group by p1.district,p1.name,p1.price 
+	order by p1.district,ranking_2;
+--answer3**窗口函数----rank() over (partition by order by)**
+select district,name,price,
+		rank() over 
+			(partition by district order by price) 
+		as ranking_3
+	from districtproducts2 d 
+	order by district,ranking_3;
+--answer1**
+update districtproducts2 p1 
+set 
+	ranking=(select count(p2.name)+1 
+						from districtproducts2 p2
+						where p1.district=p2.district 
+							and p2.price<p1.price);
+select * from districtproducts2;
+--answer2**update语句增加from临时表，并where连接内外两表并赋值主表**
+update districtproducts2 p1
+set ranking=sub.ranking
+from(select district,name,rank() over(partition by district
+															order by price desc)
+				as ranking
+			from districtproducts2
+		) sub
+where p1.district=sub.district and p1.name=sub.name;
+--answer2**标准MYSQL写法，join**
+update districtproducts2 d 
+join(
+	select district,name,
+		rank() over(partition by district order by price)
+		as ranking
+		from districtproducts2 
+) sub 
+on d.district=sub.district and d.name=sub.name 
+set 
+d.ranking=sub.ranking;
+--P59
+create table class_a(
+name varchar(4) not null,
+age int not null,
+city varchar(4) not null,
+primary key(name)
+);
+insert into class_a
+values
+('布朗',22,'东京'),
+('拉里',19,'琦玉'),
+('伯杰',21,'千叶');
+create table class_b(
+name varchar(2) not null,
+age int,
+city varchar(4) not null,
+primary key(name)
+);
+insert into class_b
+values
+('齐藤',22,'东京'),
+('田尻',23,'东京'),
+('山田',null,'东京'),
+('和泉',18,'千叶'),
+('武田',20,'千叶'),
+('石川',19,'神奈川');
+select * from class_b;
+--p60
 --answer1
-		
-		
+select name,age,city 
+	from class_a a
+	where age not in (select age from class_b b where city='东京'
+							and b.age is not null
+							);
+--answer2
+select * from class_a a
+	where not exists(select * from class_b b
+										where a.age=b.age and
+											b.city='东京')
+	order by age desc;
+--p63
+update class_b
+set age=20
+where name='山田';
+--answer1
+select * from class_a
+	where age<(select min(age) from class_b
+								where city='东京');
+--answer2
+select name,age,city
+	from class_a
+	where age<all(select age from class_b where city='东京');
+--p69
+create table seqtbl(
+seq int not null,
+name varchar(4) not null,
+primary key (seq)
+);
+insert into seqtbl
+values
+(1,'迪克'),
+(2,'安'),
+(3,'莱露'),
+(5,'卡'),
+(6,'玛丽'),
+(8,'本');
+select * from seqtbl;
+----
+select '存在缺失的编号' as gap
+	from seqtbl
+	having count(*)<>max(seq);
+----
+select min(seq+1) as gap
+	from seqtbl
+	where  (seq+1) not in (select seq from seqtbl);
 
 
 
-select * from products;--模块1：演示完整提交流程
-select max(price),min(price) from products;
+
+
+
+
+
+
+
+
+
+
+
 
