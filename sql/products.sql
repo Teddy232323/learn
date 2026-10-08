@@ -940,15 +940,64 @@ values
 (8,'本');
 select * from seqtbl;
 ----
-select '存在缺失的编号' as gap
+--answer1
+select '存在缺失的编号' as gap_1
 	from seqtbl
 	having count(*)<>max(seq);
+--answer 2
+select case when count(*) <> max(seq) then '存在缺失的编号' 
+						else '编号连续无缺失' end as gap_2
+	from seqtbl;
+--answer 3**缺失一个**
+select s1.seq+1 as missing_gap
+	from seqtbl s1
+	left join seqtbl s2
+		on s1.seq+1=s2.seq
+	where s2.seq is null and s1.seq<>(select max(seq) from seqtbl);
+--answer 4**缺失多个**
+select gs as missing_gap
+	from (select min(seq) as min_gap,max(seq) as max_gap from seqtbl) t
+	cross join generate_series(t.min_gap,t.max_gap) gs
+	where not exists (select 1 from seqtbl s where s.seq=gs);
 ----
 select min(seq+1) as gap
 	from seqtbl
 	where  (seq+1) not in (select seq from seqtbl);
-
-
+--p72
+create table graduates(
+name varchar(4) not null,
+income int not null,
+primary key (name));
+insert into graduates
+values
+('桑普森',400000),
+('迈克',30000),
+('怀特',20000),
+('阿诺德',20000),
+('史密斯',20000),
+('劳伦斯',15000),
+('哈德逊',15000),
+('肯特',10000),
+('贝克',10000),
+('斯科特',10000);
+select * from graduates;
+--answer **众值**
+select income as "众值",count(*) as times
+	from graduates
+	group by income
+	order by times desc;
+--answer2
+select income as common_value,count(*) as times
+	from graduates
+	group by income
+	having count(*)=(
+								select max(cnt) 
+								from (select count(*) cnt from graduates 
+										group by income) t1
+								);
+--answer3**窗口函数**
+select income as common_value,count(*) as times,
+		max(times) over(partition by income order by times)
 
 
 
