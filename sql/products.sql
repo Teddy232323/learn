@@ -995,14 +995,98 @@ select income as common_value,count(*) as times
 								from (select count(*) cnt from graduates 
 										group by income) t1
 								);
---answer3**窗口函数**
-select income as common_value,count(*) as times,
-		max(times) over(partition by income order by times)
-
-
-
-
-
+--answer**textbook**--**all,any,some的用法**
+select income,count(*) as cnt 
+	from graduates g 
+	group by income 
+	having count(*) >= all(select count(*) from graduates group by income);
+--answer**textbook**--**避免all关于空集和null的干扰，使用max()聚合函数**
+select income,count(*) as cnt
+	from graduates g
+	group by g.income 
+	having count(*) >= (select max(cnt) 
+										from (select count(*) cnt 
+													from graduates group by income) t1
+						   			);
+--p74**having子句自连接求median中位数**
+select avg(distinct income)
+	from (select t1.income from graduates t1,graduates t2 
+				group by t1.income 
+				having sum(case when t2.income>=t1.income then 1 else 0 end)
+								>=count(*)/2
+					and sum(case when t2.income <=t1.income then 1 else 0 end)
+								>=count(*)/2
+			) tmp;
+select avg(income)
+	from(
+		select income,
+			row_number() over (order by income) as rn,
+			count(*) over() as total
+		from graduates
+		   ) t
+	where rn in  ((total+1)/2,(total+2)/2);
+/*
+ * CTE common table express- with语法
+ * with 别名1 as(
+ * 		--子查询，生成第一张虚拟表
+ * 		select ...
+ * 		),
+ * 		别名2 as(
+ * 		--可以引用前面定义的别名1
+ * 		select... from 别名1
+ * 		）
+ * ---主查询，使用上面定义的CTE
+ * 		select * from 别名2；
+ */
+with ranked as (
+	select income,row_number() over (order by income) as rn,
+			count(*) over () as total_rows
+		from graduates
+	)
+	select avg(income) as median
+		from ranked
+		where rn between(tatal_rows+1)/2 and (total_rows+2)/2;
+ --学习with语法练习
+with income_cnt as (
+	select income,count(*) as cnt  
+	from graduates
+	group by income
+	)
+	select * from income_cnt
+		order by cnt  desc;
+with income_cnt as (
+	select income,count(*) as cnt 
+	from graduates
+	group by income 
+	),
+	max_count as(
+	select max(cnt) max_cnt from income_cnt
+	)
+	select ic.income,ic.cnt 
+	from income_cnt ic,max_cnt mc
+	where ic.cnt=mc.max_cnt;
+with t as (select * from graduates g )
+	select * from t where income>300000
+	union all 
+	select * from t where income<20000;
+/*递归CTE学习
+ * with recursive cte_name as (
+ * 		--锚点成员 anchor，初始数据集，只执行一次，递归起点
+ * 		select ...
+ * 		union all
+ * 		--递归成员 recursive,引用cte_name自己，循环迭代
+ * 		select ... from cte_name ...
+ * 		)
+ * 		select * from cte_name; 
+ */
+with recursive nums(n) as (
+	--锚点
+	select 1
+	union all
+	--递归
+	select n+1 from nums where n<10
+	)
+	select n from  nums;
 
 
 
