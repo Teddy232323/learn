@@ -1079,6 +1079,7 @@ with t as (select * from graduates g )
  * 		)
  * 		select * from cte_name; 
  */
+--example1:
 with recursive nums(n) as (
 	--锚点
 	select 1
@@ -1087,6 +1088,29 @@ with recursive nums(n) as (
 	select n+1 from nums where n<10
 	)
 	select n from  nums;
+--ready for example2
+create table org(
+id int,
+name varchar(4) not null,
+boss_id int,
+primary key (id)
+);
+insert into org 
+values
+(1,'老板',null),
+(2,'主管A',1),
+(3,'员工A1',2);
+select * from org;
+--example2
+with recursive tree as (
+	select id,name,boss_id,1 as level 
+		from org where boss_id is null
+	union all 
+	select o.id,o.name,o.boss_id,t.level+1
+		from org o
+		join tree t on o.boss_id=t.id 
+)
+select  * from tree;
 
 
 
